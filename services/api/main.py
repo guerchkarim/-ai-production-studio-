@@ -76,7 +76,7 @@ def save_revision(c, entity_type, item):
 
 
 migrate_v2()
-app = FastAPI(title='AI Production Studio', version='0.2.0')
+app = FastAPI(title='AI Production Studio', version='0.3.0')
 
 class Password(BaseModel):
     password: str = Field(min_length=10, max_length=256)
@@ -140,7 +140,7 @@ def as_list(c, table):
 
 @app.get('/api/v1/health')
 def health():
-    return {'status': 'ok', 'version': '0.2.0'}
+    return {'status': 'ok', 'version': '0.3.0'}
 
 
 @app.get('/api/v1/auth/status')
@@ -380,13 +380,16 @@ def export_project(project_id: str):
     with db() as c:
         project_exists(c, project_id)
         project = dict(c.execute('SELECT * FROM projects WHERE id=?', (project_id,)).fetchone())
-        manifest = {'schema_version':2,'project':project}
+        manifest = {'schema_version':3,'project':project}
         for table in ('assets','characters','jobs'):
             manifest[table] = [dict(r) for r in c.execute(f'SELECT * FROM {table} WHERE project_id=?',(project_id,))]
         manifest['character_references'] = [dict(r) for r in c.execute('SELECT r.* FROM character_references r JOIN characters ch ON ch.id=r.character_id WHERE ch.project_id=?', (project_id,))]
         manifest['revisions'] = [dict(r) for r in c.execute("SELECT * FROM revisions WHERE (entity_type='projects' AND entity_id=?) OR (entity_type='characters' AND entity_id IN (SELECT id FROM characters WHERE project_id=?)) ORDER BY created_at", (project_id, project_id))]
         for revision in manifest['revisions']:
             revision['snapshot'] = json.loads(revision['snapshot'])
+    manifest['production'] = production_snapshot(project_id)
+    with db() as c:
+        manifest['remote_generations'] = [{'job_id':r['job_id'],'request':json.loads(r['request']),'result':json.loads(r['result']) if r['result'] else None} for r in c.execute('SELECT rr.* FROM remote_runs rr JOIN jobs j ON j.id=rr.job_id WHERE j.project_id=?',(project_id,))]
     archive = io.BytesIO()
     with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED) as z:
         z.writestr('manifest.json',json.dumps(manifest,ensure_ascii=False,indent=2))
@@ -397,3 +400,19 @@ def export_project(project_id: str):
             z.write(path,'media/'+checksum)
     archive.seek(0)
     return StreamingResponse(archive, media_type='application/zip', headers={'Content-Disposition':f'attachment; filename="studio-{project_id}.zip"'})
+
+# Registered after core endpoints to keep the control and CPU render modules separate.
+from .production import register as register_production
+production_snapshot = register_production(app, db, DATA, require_auth, audit, project_exists)
+from .restore import register as register_restore
+register_restore(app, db, DATA, require_auth, audit, ProjectIn, CharacterIn)
+
+from .colab import register as register_colab
+register_colab(app, db, DATA, require_auth, audit)
+
+# A local production build can be served by the same authenticated API origin.
+# The static shell contains no user data; all private content remains behind /api.
+from fastapi.staticfiles import StaticFiles
+_frontend = Path(__file__).resolve().parents[2] / 'dist'
+if _frontend.is_dir():
+    app.mount('/', StaticFiles(directory=_frontend, html=True), name='studio-web')

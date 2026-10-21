@@ -1,96 +1,81 @@
-# AI Production Studio · Socle 0.2
+# AI Production Studio · 0.3
 
-Atelier personnel audiovisuel, en français. React/TypeScript + FastAPI + SQLite.
-Ce dépôt est indépendant de `guerchkarim/-_-`. Aucune clé Gemini, autre clé API, carte bancaire ou GPU n'est nécessaire pour démarrer.
+Atelier audiovisuel personnel, React/TypeScript + FastAPI + SQLite + FFmpeg. Dépôt indépendant de votre application d'évaluation d'arabe. Le serveur écoute uniquement en boucle locale. Aucune clé Gemini, carte bancaire ou souscription n'est nécessaire pour démarrer.
 
-## Fonctionnalités de ce jalon
+## Démarrer sur Windows
 
-- Accès propriétaire par mot de passe (10 caractères minimum), hash scrypt, session HttpOnly de 12 heures.
-- Projets persistants et modifiables : langue, résolution, cadence et budget plafond. Historique des versions et protection contre les modifications concurrentes.
-- Import, recherche, filtrage, aperçu et téléchargement de médias (50 Mo maximum).
-- SHA-256, déduplication des fichiers et contrôle des signatures PNG/JPEG/WebP/MP4/WebM/WAV/MP3/OGG.
-- Fiches personnages en Unicode, modifiables, avec description et intention de voix. Historique conservé à chaque modification.
-- Références visuelles par personnage (face, profil, trois-quarts, corps entier, tenue, expression), sélectionnées parmi les images du même projet. Approbation manuelle à l’ajout, sans promesse de Character Lock génératif.
-- Demandes image/vidéo/voix persistantes, explicitement **bloquées** sans moteur. Annulation disponible. Budget de tâche supérieur au projet refusé.
-- Export ZIP de projet (manifeste JSON versionné + médias), audit de création/annulation et sauvegarde/restauration complète hors ligne.
-- Interface responsive et statistiques issues des données réelles, sans données de démonstration.
+Installez Python 3.12+ et Node.js LTS 22+, puis double-cliquez sur **Lancer-Studio.cmd**. Le premier lancement installe les dépendances verrouillées, compile l'interface et ouvre votre navigateur. Créez votre mot de passe propriétaire au premier accès. Le serveur doit rester ouvert.
 
-## Installation et démarrage
+FFmpeg et FFprobe sont nécessaires aux exports MP4 (avec encodeurs libx264 et AAC). Sans eux, les projets, scénarios, médias et personnages restent disponibles. [Guide Windows](docs/installation-windows.md).
 
-Prérequis : Node.js 22+ et Python 3.12. Testé ici sous Linux avec Node 24 et Python 3.12. Les instructions Windows restent à valider sur le PC cible.
+Les tests ont été exécutés sous Linux avec Node 24 et Python 3.12, pas sur votre PC Windows physique. L'accès mobile distant nécessite un déploiement HTTPS authentifié séparé ; publier l'environnement Codex n'héberge pas une application publique et ne l'installe pas sur votre PC.
+
+## Fonctions disponibles
+
+- Accès propriétaire par mot de passe, hash scrypt et session HttpOnly de 12 heures. Projets, budgets et personnages modifiables, avec historique et conflits de versions contrôlés.
+- Import privé de médias, SHA-256, déduplication, signatures de formats, aperçu et téléchargement. Références de personnages par vue, avec approbation au moment de l'ajout.
+- Scénarios FR/AR : saisie, import TXT/Markdown, extraction locale PDF/DOCX, découpage déterministe par paragraphes. Le PDF scanné nécessite un OCR non intégré.
+- Storyboard : plans éditables, durées, médias associés et approbation humaine. Les durées de narration estimées restent indicatives.
+- Montage séquentiel : images/vidéos, durée, point d'entrée vidéo, ordre des clips, bande sonore optionnelle. Les sources et les versions sauvegardées sont conservées ; le retrait d'un clip demande confirmation.
+- **Export réel MP4 H.264 720p / 24 i/s sur CPU**, jusqu'à 200 clips et 30 minutes par montage. Aucun benchmark de film de 30 minutes n'a encore été réalisé. Le son des vidéos source est retiré ; la bande sonore choisie est complétée par du silence ou coupée à la durée du film. Pas de transitions complexes, sous-titres, overlays ou timeline multipiste dans cette version.
+- File persistante de rendus, progression, annulation, reprise manuelle d'un export échoué/annulé. Après redémarrage, les rendus interrompus reprennent leur file et réutilisent les segments déjà vérifiés. Utiliser **un seul processus Uvicorn** avec ce worker intégré.
+- ZIP portable par projet : médias, fiches, historique, scénario, storyboard, montage et provenance des générations. **Restauration en nouveau projet**, nouveaux UUID, contrôle des chemins et des checksums, sans écraser l'original. Les anciennes tâches ne sont jamais relancées automatiquement ; l'ancien manifeste est conservé en provenance de l'import.
+- Interface responsive et shell PWA installable depuis une origine sécurisée ou localhost. Le service worker ne met en cache ni API, ni session, ni média privé. Sans liaison avec le serveur, les opérations privées sont indisponibles : pas de modification hors ligne du projet.
+
+## Utiliser votre session Colab
+
+Dans **Tâches**, enregistrez une demande image, vidéo ou voix. Choisissez **Exporter pour Colab**, puis téléchargez le notebook depuis la même page. Dans votre session Colab, importez le notebook et exécutez les cellules, puis importez le JSON de demande. Lisez la licence du modèle et approuvez l'utilisation de votre session avant le calcul. Réimportez le fichier `resultat-studio.zip` dans la tâche.
+
+[Notebook fourni](notebooks/AI_Production_Studio_Worker.ipynb) · [Guide Colab](docs/colab.md).
+
+L'échange par fichiers est implémenté et testé. **Le notebook n'a pas été exécuté sur GPU depuis Codex.** Les modèles sont des candidats à valider dans votre session : SDXL pour images, Wan 2.1 1.3B pour vidéo, MMS-TTS FR/AR (non commercial) pour voix. Le chargement est figé à une révision officielle au moment de l'exécution et utilise safetensors. La disponibilité des poids dans ce format, les licences actuelles, la compatibilité mémoire, la qualité et la latence doivent être confirmées par vos essais. Pas de garantie d'identité, de prononciation, de lip-sync ou de performance universelle.
+
+Aucun port du studio n'est exposé à Colab, aucun fichier n'y est envoyé automatiquement, aucun GPU n'est loué. Le JSON et le ZIP contiennent des données de production et un jeton d'association : gardez-les privés. Le token est haché dans la base et exclu des exports de provenance. Le coût d'un éventuel abonnement Colab n'est pas mesuré ni limité automatiquement par le budget local. Aucun service de paiement n'est intégré.
+
+## Installation manuelle / développement
 
 ```bash
 npm ci
 python -m venv .venv
-# Linux / macOS
 .venv/bin/python -m pip install -r services/api/requirements.lock.txt
+npm run build
 .venv/bin/python -m uvicorn services.api.main:app --host 127.0.0.1 --port 8001
 ```
 
-Dans un deuxième terminal :
+Le serveur API sert aussi l'interface compilée sur le port local 8001. Pour développer le frontend, lancez `npm run dev` dans un autre terminal : Vite sur 5174 transmet `/api` à 8001. Sur Windows, remplacez `.venv/bin/python` par `.venv\Scripts\python.exe`.
 
-```bash
-npm run dev -- --host 127.0.0.1
-```
+Données : `.studio-data/`, ignoré par Git. `STUDIO_DATA_DIR` permet de changer l'emplacement avant démarrage. `STUDIO_TRUSTED_ORIGINS` permet de définir les origines autorisées pour un proxy local ; ne pas utiliser de wildcard. Aucun secret fournisseur obligatoire.
 
-Ouvrir le port local **5174** dans son navigateur. Créer le mot de passe propriétaire au premier lancement. Aucune variable d'environnement obligatoire. Le proxy Vite transmet `/api` à l'API sur le port 8001.
-
-Windows PowerShell : remplacer `.venv/bin/python` par `.venv\Scripts\python.exe`. Le chemin Python fonctionne indépendamment de l'activation du venv.
-
-```powershell
-python -m venv .venv
-.venv\Scripts\python.exe -m pip install -r services/api/requirements.lock.txt
-.venv\Scripts\python.exe -m uvicorn services.api.main:app --host 127.0.0.1 --port 8001
-# Deuxième terminal
-npm ci
-npm run dev -- --host 127.0.0.1
-```
-
-Les données se trouvent dans `.studio-data/` (ignoré par Git). `STUDIO_DATA_DIR` permet de changer cet emplacement avant de lancer l'API. Garder cet emplacement stable entre les lancements. La migration v1 → v2 ajoute les versions et les références sans supprimer les données existantes. Elle est transactionnelle et idempotente. Sauvegarder les données avant mise à jour ; le script de sauvegarde fonctionne aussi sur une base v1.
-
-## Vérification
+## Vérifications
 
 ```bash
 npm run build
 .venv/bin/python -m unittest discover -s tests -v
-```
-
-Tests navigateur (Chromium système ou navigateur Playwright) :
-
-```bash
 npx playwright install chromium
 npm run test:e2e
 ```
 
-Le runner démarre ses propres serveurs sur 5175/8002, utilise une base temporaire, puis arrête ces processus. Il vérifie le parcours projet/personnage/média/tâche, la modification de fiches et leurs historiques, les références approuvées, les plafonds, l’export ZIP, la persistance après rechargement et la navigation mobile. Les captures et le ZIP de test sont dans `.studio-test-output/` (ignoré par Git). `PLAYWRIGHT_CHROMIUM_EXECUTABLE` permet de choisir un Chromium installé. Aucun jeu de données de test n’est écrit dans votre studio.
+Le runner E2E utilise sa propre base temporaire et ses propres serveurs 5175/8002, qu'il arrête ensuite. Il couvre édition/historique, médias, tâches, storyboard, vrai MP4, restauration ZIP, confidentialité des caches PWA et navigation mobile. `PLAYWRIGHT_CHROMIUM_EXECUTABLE` sélectionne un Chromium installé. Artifacts : `.studio-test-output/`, ignoré par Git. Les tests Colab valident uniquement le contrat de fichiers avec des données synthétiques, pas les modèles IA.
 
-API de santé : `GET /api/v1/health`. Données : `GET /api/v1/studio` (session nécessaire). Contrats interactifs FastAPI : `/docs` sur le serveur API.
+Santé API : `/api/v1/health`. Contrats API : `/docs`. Les routes de données et de médias nécessitent une session.
 
-## Sauvegarde et restauration
+## Sauvegarder sans perte
 
-**Arrêter l'API avant copie.** Une sauvegarde contient les médias, le mot de passe haché, les projets et l'audit. La conserver dans un emplacement privé, chiffré si nécessaire. Ne jamais la committer.
+Arrêtez l'API avant sauvegarde ou restauration. Le dossier sauvegardé contient les médias, la base et le mot de passe haché : conservez-le en privé, chiffré si nécessaire. Le script vérifie SQLite et les SHA-256 et refuse tout écrasement ou copie dans le dossier source.
 
 ```bash
 .venv/bin/python scripts/backup.py backup /chemin/prive/studio-backup
-# Restauration dans un nouveau répertoire uniquement, sans écrasement :
 .venv/bin/python scripts/backup.py restore /chemin/prive/studio-backup --data /chemin/prive/studio-restaure
-# Puis démarrer l'API avec STUDIO_DATA_DIR pointant vers ce répertoire.
 ```
 
-Le script vérifie SQLite et les SHA-256. Les sessions sont supprimées à la restauration ; le mot de passe existant est conservé. L'export ZIP par projet est portable et ne contient pas les identifiants. L'import/restauration de ce ZIP dans l'UI n'est pas encore implémenté.
+Redémarrez ensuite avec STUDIO_DATA_DIR pointant vers le dossier restauré. Les sessions sont invalidées, le mot de passe est conservé. La migration du schéma v1/v2 vers v4 ajoute les tables et préserve les données existantes. Le ZIP par projet reste une autre option de restauration, sans identifiants de connexion.
 
-## Limites explicites
+## Limites et prochains contrôles
 
-Aucun moteur IA, fournisseur GPU ou service payant n'est intégré. Aucune image, voix ou vidéo n'est générée. Les demandes bloquées ne démarrent pas automatiquement. Le registre de modèles montre des candidats à évaluer, pas des modèles installés. Les références visuelles et les versions de fiches sont disponibles, mais pas le Character Lock génératif, la restauration d’une version depuis l’interface, ni la suppression. L’approbation d’une référence se choisit à son ajout et ne se modifie pas ensuite dans cette version. Les personnages ne peuvent pas être déplacés entre projets.
+Usage local personnel uniquement à ce stade. L'initialisation propriétaire doit rester en boucle locale ; ne publiez pas Vite ou l'API sur Internet. Un accès distant exige HTTPS, contrôle du bootstrap, limitation des connexions et reverse proxy de production. Pas de récupération de mot de passe dans l'UI.
 
-Pas encore de timeline, montage, export MP4, workflow DAG, synchronisation Drive, connexion Colab, PWA, multi-utilisateurs ou interface RTL complète. Ce jalon ne revendique pas les recettes GPU R03–R10 du cahier des charges.
+Non implémentés : synchronisation Google Drive, GPU loué, adaptateur de modèle exécuté automatiquement en continu, benchmark réel de Character Lock, lip-sync, clonage de voix, montage professionnel multipiste, interface AR RTL complète, partage multi-utilisateur et automatisation IA de films longs sans supervision. Les modèles Colab restent expérimentaux jusqu'à vos tests GPU. La suppression et la restauration d'une ancienne version de fiche dans l'UI sont hors périmètre.
 
-**Usage local uniquement à ce stade.** Ne pas exposer Vite ou l'API sur Internet. L'initialisation du propriétaire s'effectue sans compte préalable : elle doit rester en boucle locale. Le déploiement distant nécessitera HTTPS, contrôle du bootstrap, limitation des tentatives de connexion et reverse proxy de production. Pas de mécanisme de récupération de mot de passe dans l'UI.
+Les exports ZIP sont construits en mémoire : utilisez la sauvegarde hors ligne pour les projets très volumineux. Un import ZIP accepte 100 Mo compressés / 500 Mo décompressés et ne relance aucun ancien calcul. Les signatures médias constituent un contrôle de base, pas un antivirus. Les logs FFmpeg restent privés dans le dossier de rendu ; les segments de reprise occupent du disque et ne sont jamais purgés sans action explicite.
 
-L’interface utilise les polices système, sans CDN ni requête de police externe. Aucun fichier utilisateur n’est envoyé à un moteur IA.
-
-Le ZIP d'export est construit en mémoire : utiliser la sauvegarde hors ligne pour les projets volumineux. Les signatures médias sont une protection de base, pas une analyse antivirus ni une validation complète de décodage.
-
-## Suite proposée
-
-Valider ce socle avec le propriétaire. Ensuite : diagnostic du PC, choix du stockage et des budgets, références personnages, adaptateur image distant et benchmark réel avec contrôle licence/coût. Aucune location GPU sans autorisation explicite.
+Voir [matrice de recette](docs/recette.md), [validation](docs/validation.md) et [architecture](docs/architecture.md).

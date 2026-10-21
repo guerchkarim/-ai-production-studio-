@@ -102,7 +102,7 @@ class StudioTests(unittest.TestCase):
         self.assertEqual(history[1]['snapshot']['name'],p['name'])
         self.assertEqual(history[0]['snapshot']['name'],'Film renommé')
         manifest=json.loads(zipfile.ZipFile(io.BytesIO(self.client.get('/api/v1/projects/'+p['id']+'/export').content)).read('manifest.json'))
-        self.assertEqual(manifest['schema_version'],2)
+        self.assertEqual(manifest['schema_version'],3)
         self.assertEqual(len(manifest['revisions']),2)
 
     def test_budget_reduction_cannot_undercut_pending_request(self):

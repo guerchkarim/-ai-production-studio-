@@ -20,3 +20,13 @@ Non vérifié : Windows physique, accès mobile distant, restauration d'une nouv
 - Parcours navigateur étendu : édition du projet et du personnage, consultation des deux historiques, association d’une image approuvée. Les vérifications existantes desktop/mobile restent réussies, sans erreur JavaScript.
 - Sauvegarde hors ligne de la base réelle effectuée avant migration dans /workspace/shared/studio-backups/pre-v02-20261021. La sauvegarde reste hors Git et ne contient pas les données temporaires des tests.
 - Windows et accès mobile distant restent non testés. La génération IA est toujours indisponible.
+
+## Version 0.3 — vérifications finales
+
+- **29 tests passés, aucun ignoré** sur l'environnement Linux avec FFmpeg/FFprobe disponibles. Export H.264 720p avec audio et durée vérifiée ; reprise après média absent ; redémarrage de worker réutilisant les segments sans les recalculer ; import PDF/DOCX ; restauration ZIP et refus de corruption/traversée ; contrat Colab, jetons, doublons et provenance.
+- Build TypeScript/Vite réussi. Dépendances Python verrouillées réinstallées avec succès. Code du lanceur et cellules du notebook compilés syntaxiquement.
+- E2E Chromium réussi, aucune erreur JavaScript : parcours précédent + storyboard → montage → téléchargement d'un vrai MP4, restauration d'un projet ZIP, contrôles Colab, activation PWA et absence de cache API privé, navigation mobile.
+- Le test du contrat Colab utilise des images synthétiques. **Il ne démontre pas une génération IA**. Le notebook n'a pas tourné sur le GPU du propriétaire.
+- Serveur réel redémarré en version 0.3.0, santé OK, shell compilé servi en HTTP local, accès propriétaire non initialisé (le propriétaire choisira lui-même son mot de passe). Données de test séparées et supprimées après les tests.
+- Sauvegarde hors ligne vérifiée conservée dans `/workspace/shared/studio-backups/pre-v03-offline-20261021` ; anciennes sauvegardes préservées. Le dépôt d'arabe reste sans modification.
+- Windows physique, qualité/latence des trois modèles Colab, VRAM, film de 30 minutes, licences actuelles, accès mobile distant et restauration d'un nouveau snapshot cloud restent non validés.

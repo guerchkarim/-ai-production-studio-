@@ -7,3 +7,5 @@ __pycache__/
 *.log
 .env
 .studio-test-output/
+.studio-setup.json
+.studio-backups/

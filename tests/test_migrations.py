@@ -33,6 +33,6 @@ class MigrationTests(unittest.TestCase):
                 self.assertEqual(c.execute('SELECT value FROM settings').fetchone()[0],'test-only-hash-fixture')
                 self.assertEqual(c.execute('SELECT COUNT(*) FROM sessions').fetchone()[0],1)
                 self.assertEqual(c.execute('SELECT COUNT(*) FROM revisions').fetchone()[0],2)
-                self.assertEqual(c.execute('SELECT MAX(version) FROM schema_version').fetchone()[0],2)
+                self.assertEqual(c.execute('SELECT MAX(version) FROM schema_version').fetchone()[0],4)
                 snapshot=json.loads(c.execute("SELECT snapshot FROM revisions WHERE entity_type='characters'").fetchone()[0])
                 self.assertEqual(snapshot['description'],'Description originale')
