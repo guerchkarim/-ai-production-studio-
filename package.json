@@ -1,0 +1,25 @@
+{
+  "name": "ai-production-studio",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test:api": ".venv/bin/python -m unittest discover -s tests",
+    "test:e2e": "node tests/e2e.cjs"
+  },
+  "dependencies": {
+    "lucide-react": "0.468.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.10",
+    "@types/react-dom": "19.1.9",
+    "playwright": "1.58.2",
+    "typescript": "5.8.3",
+    "vite": "6.4.5"
+  },
+  "type": "module"
+}
