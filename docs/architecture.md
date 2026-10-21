@@ -7,3 +7,11 @@ Schéma v1 : projects, assets, characters, jobs, settings, sessions, audit. Les 
 La frontière de calcul est volontairement absente du socle plutôt que simulée. Les prochains adaptateurs implémenteront probe/estimate/prepare/execute/cancel/cleanup. Une queue active, le budget réservé cumulé, l'idempotence et la reprise d'exécution ne devront être annoncés qu'après leur implémentation et leurs essais.
 
 Les fichiers d'authentification et médias sont exclus des commits. Le script de sauvegarde vérifie l'intégrité et refuse tout écrasement. L'accès distant est hors périmètre du socle, pas simplement activable par ouverture d'un port.
+
+## Évolution 0.2
+
+Migration transactionnelle et idempotente vers le schéma 2 : version des projets/personnages, table revisions avec snapshots JSON immuables et table character_references. Les fiches v1 sont conservées avec version 1 et historique initial. Chaque PUT attend la version lue par le client ; une version périmée renvoie 409 et ne modifie rien. Les opérations d’édition sont sérialisées par transaction SQLite BEGIN IMMEDIATE.
+
+Les références visuelles sont uniquement des images du même projet que le personnage. L’ajout est idempotent par personnage/image/vue. L’approbation éditoriale est enregistrée à l’ajout ; une tentative de changer cette approbation par réajout renvoie 409. Aucun modèle n’utilise encore ces références. L’export ZIP v2 inclut fiches, historique, références et médias.
+
+Le budget d’un projet ne peut pas descendre sous les dépenses constatées ou le plus grand plafond de ses demandes actives. Ce contrôle ne constitue pas un mécanisme de réservation cumulée : toutes les tâches restent bloquées sans adaptateur.

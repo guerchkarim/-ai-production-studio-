@@ -1,4 +1,4 @@
-# AI Production Studio · Socle 0.1
+# AI Production Studio · Socle 0.2
 
 Atelier personnel audiovisuel, en français. React/TypeScript + FastAPI + SQLite.
 Ce dépôt est indépendant de `guerchkarim/-_-`. Aucune clé Gemini, autre clé API, carte bancaire ou GPU n'est nécessaire pour démarrer.
@@ -6,10 +6,11 @@ Ce dépôt est indépendant de `guerchkarim/-_-`. Aucune clé Gemini, autre clé
 ## Fonctionnalités de ce jalon
 
 - Accès propriétaire par mot de passe (10 caractères minimum), hash scrypt, session HttpOnly de 12 heures.
-- Projets persistants : langue, résolution, cadence et budget plafond.
+- Projets persistants et modifiables : langue, résolution, cadence et budget plafond. Historique des versions et protection contre les modifications concurrentes.
 - Import, recherche, filtrage, aperçu et téléchargement de médias (50 Mo maximum).
 - SHA-256, déduplication des fichiers et contrôle des signatures PNG/JPEG/WebP/MP4/WebM/WAV/MP3/OGG.
-- Fiches personnages en Unicode, avec description et intention de voix.
+- Fiches personnages en Unicode, modifiables, avec description et intention de voix. Historique conservé à chaque modification.
+- Références visuelles par personnage (face, profil, trois-quarts, corps entier, tenue, expression), sélectionnées parmi les images du même projet. Approbation manuelle à l’ajout, sans promesse de Character Lock génératif.
 - Demandes image/vidéo/voix persistantes, explicitement **bloquées** sans moteur. Annulation disponible. Budget de tâche supérieur au projet refusé.
 - Export ZIP de projet (manifeste JSON versionné + médias), audit de création/annulation et sauvegarde/restauration complète hors ligne.
 - Interface responsive et statistiques issues des données réelles, sans données de démonstration.
@@ -45,7 +46,7 @@ npm ci
 npm run dev -- --host 127.0.0.1
 ```
 
-Les données se trouvent dans `.studio-data/` (ignoré par Git). `STUDIO_DATA_DIR` permet de changer cet emplacement avant de lancer l'API. Garder cet emplacement stable entre les lancements. La création du schéma v1 est idempotente ; les futures évolutions nécessiteront de nouvelles migrations.
+Les données se trouvent dans `.studio-data/` (ignoré par Git). `STUDIO_DATA_DIR` permet de changer cet emplacement avant de lancer l'API. Garder cet emplacement stable entre les lancements. La migration v1 → v2 ajoute les versions et les références sans supprimer les données existantes. Elle est transactionnelle et idempotente. Sauvegarder les données avant mise à jour ; le script de sauvegarde fonctionne aussi sur une base v1.
 
 ## Vérification
 
@@ -61,7 +62,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Le runner démarre ses propres serveurs sur 5175/8002, utilise une base temporaire, puis arrête ces processus. Il vérifie le parcours projet/personnage/média/tâche, les plafonds, l’export ZIP, la persistance après rechargement et la navigation mobile. Les captures et le ZIP de test sont dans `.studio-test-output/` (ignoré par Git). `PLAYWRIGHT_CHROMIUM_EXECUTABLE` permet de choisir un Chromium installé. Aucun jeu de données de test n’est écrit dans votre studio.
+Le runner démarre ses propres serveurs sur 5175/8002, utilise une base temporaire, puis arrête ces processus. Il vérifie le parcours projet/personnage/média/tâche, la modification de fiches et leurs historiques, les références approuvées, les plafonds, l’export ZIP, la persistance après rechargement et la navigation mobile. Les captures et le ZIP de test sont dans `.studio-test-output/` (ignoré par Git). `PLAYWRIGHT_CHROMIUM_EXECUTABLE` permet de choisir un Chromium installé. Aucun jeu de données de test n’est écrit dans votre studio.
 
 API de santé : `GET /api/v1/health`. Données : `GET /api/v1/studio` (session nécessaire). Contrats interactifs FastAPI : `/docs` sur le serveur API.
 
@@ -80,7 +81,7 @@ Le script vérifie SQLite et les SHA-256. Les sessions sont supprimées à la re
 
 ## Limites explicites
 
-Aucun moteur IA, fournisseur GPU ou service payant n'est intégré. Aucune image, voix ou vidéo n'est générée. Les demandes bloquées ne démarrent pas automatiquement. Le registre de modèles montre des candidats à évaluer, pas des modèles installés. Les personnages n'ont pas encore de références multi-vues, de versions éditables ni de Character Lock. Les fiches/projets sont créables et consultables ; modification et suppression ne font pas partie de ce jalon.
+Aucun moteur IA, fournisseur GPU ou service payant n'est intégré. Aucune image, voix ou vidéo n'est générée. Les demandes bloquées ne démarrent pas automatiquement. Le registre de modèles montre des candidats à évaluer, pas des modèles installés. Les références visuelles et les versions de fiches sont disponibles, mais pas le Character Lock génératif, la restauration d’une version depuis l’interface, ni la suppression. L’approbation d’une référence se choisit à son ajout et ne se modifie pas ensuite dans cette version. Les personnages ne peuvent pas être déplacés entre projets.
 
 Pas encore de timeline, montage, export MP4, workflow DAG, synchronisation Drive, connexion Colab, PWA, multi-utilisateurs ou interface RTL complète. Ce jalon ne revendique pas les recettes GPU R03–R10 du cahier des charges.
 

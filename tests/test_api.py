@@ -90,4 +90,69 @@ class StudioTests(unittest.TestCase):
         self.assertEqual(self.client.post('/api/v1/projects',json={'name':'Bad','budget':-1}).status_code,422)
         self.assertEqual(self.client.post('/api/v1/projects',json={'name':'   '}).status_code,422)
 
+    def test_project_edit_preserves_history_and_rejects_stale_version(self):
+        p=self.project(10)
+        body={**p,'name':'Film renommé','budget':8}
+        r=self.client.put('/api/v1/projects/'+p['id'],json=body)
+        self.assertEqual(r.status_code,200)
+        self.assertEqual(r.json()['version'],2)
+        self.assertEqual(self.client.put('/api/v1/projects/'+p['id'],json=body).status_code,409)
+        history=self.client.get('/api/v1/projects/'+p['id']+'/history').json()
+        self.assertEqual([h['version'] for h in history],[2,1])
+        self.assertEqual(history[1]['snapshot']['name'],p['name'])
+        self.assertEqual(history[0]['snapshot']['name'],'Film renommé')
+        manifest=json.loads(zipfile.ZipFile(io.BytesIO(self.client.get('/api/v1/projects/'+p['id']+'/export').content)).read('manifest.json'))
+        self.assertEqual(manifest['schema_version'],2)
+        self.assertEqual(len(manifest['revisions']),2)
+
+    def test_budget_reduction_cannot_undercut_pending_request(self):
+        p=self.project(10)
+        job=self.client.post('/api/v1/jobs',json={'project_id':p['id'],'type':'image','prompt':'Portrait','max_cost':7}).json()
+        body={**p,'budget':5}
+        self.assertEqual(self.client.put('/api/v1/projects/'+p['id'],json=body).status_code,409)
+        self.client.post('/api/v1/jobs/'+job['id']+'/cancel')
+        self.assertEqual(self.client.put('/api/v1/projects/'+p['id'],json=body).status_code,200)
+
+    def test_character_edit_versions_and_project_isolation(self):
+        p=self.project();other=self.project()
+        char=self.client.post('/api/v1/characters',json={'project_id':p['id'],'name':'Nour','description':'Version initiale'}).json()
+        body={**char,'name':'نور','description':'نسخة جديدة','voice':'AR / FR'}
+        r=self.client.put('/api/v1/characters/'+char['id'],json=body)
+        self.assertEqual(r.status_code,200)
+        self.assertEqual(r.json()['version'],2)
+        self.assertEqual(self.client.put('/api/v1/characters/'+char['id'],json=body).status_code,409)
+        body={**r.json(),'project_id':other['id']}
+        self.assertEqual(self.client.put('/api/v1/characters/'+char['id'],json=body).status_code,409)
+        history=self.client.get('/api/v1/characters/'+char['id']+'/history').json()
+        self.assertEqual([h['snapshot']['description'] for h in history],['نسخة جديدة','Version initiale'])
+
+    def test_character_references_are_scoped_deduplicated_and_exported(self):
+        p=self.project();other=self.project()
+        char=self.client.post('/api/v1/characters',json={'project_id':p['id'],'name':'Nour'}).json()
+        images=[]
+        for project in (p,other):
+            images.append(self.client.post('/api/v1/assets/upload',params={'project_id':project['id']},files={'file':('face.png',PNG,'image/png')}).json())
+        endpoint='/api/v1/characters/'+char['id']+'/references'
+        self.assertEqual(self.client.post(endpoint,json={'asset_id':images[1]['id']}).status_code,422)
+        self.assertEqual(self.client.post(endpoint,json={'asset_id':'missing'}).status_code,404)
+        body={'asset_id':images[0]['id'],'label':'face','approved':True}
+        first=self.client.post(endpoint,json=body)
+        self.assertEqual(first.status_code,201)
+        self.assertTrue(first.json()['approved'])
+        self.assertEqual(self.client.post(endpoint,json=body).json()['id'],first.json()['id'])
+        self.assertEqual(self.client.post(endpoint,json={**body,'approved':False}).status_code,409)
+        self.assertEqual(self.client.post(endpoint,json={**body,'label':'invalid'}).status_code,422)
+        archive=zipfile.ZipFile(io.BytesIO(self.client.get('/api/v1/projects/'+p['id']+'/export').content))
+        manifest=json.loads(archive.read('manifest.json'))
+        self.assertEqual(len(manifest['character_references']),1)
+        self.assertEqual(manifest['character_references'][0]['asset_id'],images[0]['id'])
+
+    def test_edits_and_histories_require_auth(self):
+        guest=TestClient(main.app)
+        p=self.project()
+        self.assertEqual(guest.put('/api/v1/projects/'+p['id'],json={**p,'name':'No'}).status_code,401)
+        self.assertEqual(guest.get('/api/v1/projects/'+p['id']+'/history').status_code,401)
+        self.assertEqual(guest.post('/api/v1/characters/missing/references',json={'asset_id':'x'}).status_code,401)
+        self.assertEqual(self.client.get('/api/v1/projects/missing/history').status_code,404)
+
 if __name__=='__main__': unittest.main()

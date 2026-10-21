@@ -48,7 +48,35 @@ with db() as c:
     CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY AUTOINCREMENT, action TEXT NOT NULL, entity_id TEXT NOT NULL, created_at REAL NOT NULL);
     ''')
 
-app = FastAPI(title='AI Production Studio', version='0.1.0')
+def migrate_v2():
+    """Add versioned records without discarding a v1 database or its media."""
+    with db() as c:
+        c.execute('BEGIN IMMEDIATE')
+        for table in ('projects', 'characters'):
+            if 'version' not in {row['name'] for row in c.execute(f'PRAGMA table_info({table})')}:
+                c.execute(f'ALTER TABLE {table} ADD COLUMN version INTEGER NOT NULL DEFAULT 1')
+        c.execute('''CREATE TABLE IF NOT EXISTS revisions(
+            entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, version INTEGER NOT NULL,
+            snapshot TEXT NOT NULL, created_at REAL NOT NULL,
+            PRIMARY KEY(entity_type, entity_id, version))''')
+        c.execute('''CREATE TABLE IF NOT EXISTS character_references(
+            id TEXT PRIMARY KEY, character_id TEXT NOT NULL REFERENCES characters(id),
+            asset_id TEXT NOT NULL REFERENCES assets(id), label TEXT NOT NULL,
+            approved INTEGER NOT NULL DEFAULT 0, created_at REAL NOT NULL,
+            UNIQUE(character_id, asset_id, label))''')
+        for table in ('projects', 'characters'):
+            for row in c.execute(f'SELECT * FROM {table}').fetchall():
+                save_revision(c, table, dict(row))
+        c.execute('INSERT OR IGNORE INTO schema_version VALUES(2)')
+
+
+def save_revision(c, entity_type, item):
+    c.execute('INSERT OR IGNORE INTO revisions VALUES(?,?,?,?,?)',
+              (entity_type, item['id'], item['version'], json.dumps(item, ensure_ascii=False), time.time()))
+
+
+migrate_v2()
+app = FastAPI(title='AI Production Studio', version='0.2.0')
 
 class Password(BaseModel):
     password: str = Field(min_length=10, max_length=256)
@@ -65,6 +93,17 @@ class CharacterIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     description: str = Field(default='', max_length=6000)
     voice: str = Field(default='', max_length=120)
+
+class ProjectUpdate(ProjectIn):
+    version: int = Field(ge=1)
+
+class CharacterUpdate(CharacterIn):
+    version: int = Field(ge=1)
+
+class ReferenceIn(BaseModel):
+    asset_id: str
+    label: str = Field(default='face', pattern='^(face|profile|three-quarter|full-body|outfit|expression|other)$')
+    approved: bool = False
 
 class JobIn(BaseModel):
     project_id: str
@@ -101,7 +140,7 @@ def as_list(c, table):
 
 @app.get('/api/v1/health')
 def health():
-    return {'status': 'ok', 'version': '0.1.0'}
+    return {'status': 'ok', 'version': '0.2.0'}
 
 
 @app.get('/api/v1/auth/status')
@@ -153,7 +192,7 @@ def logout(request: Request, response: Response):
 @app.get('/api/v1/studio', dependencies=[Depends(require_auth)])
 def studio():
     with db() as c:
-        return {key: as_list(c, key) for key in ('projects', 'characters', 'assets', 'jobs')}
+        return {key: as_list(c, key) for key in ('projects', 'characters', 'assets', 'jobs', 'character_references')}
 
 
 @app.post('/api/v1/projects', dependencies=[Depends(require_auth)], status_code=201)
@@ -161,9 +200,10 @@ def create_project(body: ProjectIn):
     name = body.name.strip()
     if not name:
         raise HTTPException(422, 'Nom requis')
-    item = {'id': str(uuid.uuid4()), **body.model_dump(), 'name': name, 'created_at': time.time()}
+    item = {'id': str(uuid.uuid4()), **body.model_dump(), 'name': name, 'created_at': time.time(), 'version': 1}
     with db() as c:
-        c.execute('INSERT INTO projects VALUES(:id,:name,:language,:resolution,:fps,:budget,:created_at)', item)
+        c.execute('INSERT INTO projects(id,name,language,resolution,fps,budget,created_at,version) VALUES(:id,:name,:language,:resolution,:fps,:budget,:created_at,:version)', item)
+        save_revision(c, 'projects', item)
         audit(c, 'project.created', item['id'])
     return item
 
@@ -172,11 +212,86 @@ def create_project(body: ProjectIn):
 def create_character(body: CharacterIn):
     if not body.name.strip():
         raise HTTPException(422, 'Nom requis')
-    item = {'id': str(uuid.uuid4()), **body.model_dump(), 'created_at': time.time()}
+    item = {'id': str(uuid.uuid4()), **body.model_dump(), 'name': body.name.strip(), 'created_at': time.time(), 'version': 1}
     with db() as c:
         project_exists(c, body.project_id)
-        c.execute('INSERT INTO characters VALUES(:id,:project_id,:name,:description,:voice,:created_at)', item)
+        c.execute('INSERT INTO characters(id,project_id,name,description,voice,created_at,version) VALUES(:id,:project_id,:name,:description,:voice,:created_at,:version)', item)
+        save_revision(c, 'characters', item)
         audit(c, 'character.created', item['id'])
+    return item
+
+
+@app.put('/api/v1/projects/{project_id}', dependencies=[Depends(require_auth)])
+def update_project(project_id: str, body: ProjectUpdate):
+    if not body.name.strip():
+        raise HTTPException(422, 'Nom requis')
+    with db() as c:
+        c.execute('BEGIN IMMEDIATE')
+        project_exists(c, project_id)
+        old = dict(c.execute('SELECT * FROM projects WHERE id=?', (project_id,)).fetchone())
+        if old['version'] != body.version:
+            raise HTTPException(409, 'Cette fiche a changé. Fermez la fenêtre et rechargez les données avant de réessayer.')
+        largest = c.execute("SELECT COALESCE(MAX(max_cost),0) FROM jobs WHERE project_id=? AND status NOT IN ('canceled','completed')", (project_id,)).fetchone()[0]
+        spent = c.execute('SELECT COALESCE(SUM(actual_cost),0) FROM jobs WHERE project_id=?', (project_id,)).fetchone()[0]
+        if body.budget < max(largest, spent):
+            raise HTTPException(409, 'Le budget ne peut pas être inférieur aux dépenses ou aux plafonds des demandes actives. Annulez les demandes concernées avant de le réduire.')
+        item = {**old, **body.model_dump(), 'name':body.name.strip(), 'version':old['version']+1}
+        c.execute('UPDATE projects SET name=:name,language=:language,resolution=:resolution,fps=:fps,budget=:budget,version=:version WHERE id=:id', item)
+        save_revision(c, 'projects', item)
+        audit(c, 'project.updated', project_id)
+    return item
+
+
+@app.put('/api/v1/characters/{character_id}', dependencies=[Depends(require_auth)])
+def update_character(character_id: str, body: CharacterUpdate):
+    if not body.name.strip():
+        raise HTTPException(422, 'Nom requis')
+    with db() as c:
+        c.execute('BEGIN IMMEDIATE')
+        row = c.execute('SELECT * FROM characters WHERE id=?', (character_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, 'Personnage introuvable')
+        old = dict(row)
+        if old['version'] != body.version:
+            raise HTTPException(409, 'Cette fiche a changé. Fermez la fenêtre et rechargez les données avant de réessayer.')
+        if body.project_id != old['project_id']:
+            raise HTTPException(409, 'Un personnage ne peut pas être déplacé dans un autre projet.')
+        item = {**old, **body.model_dump(), 'name':body.name.strip(), 'version':old['version']+1}
+        c.execute('UPDATE characters SET name=:name,description=:description,voice=:voice,version=:version WHERE id=:id', item)
+        save_revision(c, 'characters', item)
+        audit(c, 'character.updated', character_id)
+    return item
+
+
+@app.get('/api/v1/{entity_type}/{entity_id}/history', dependencies=[Depends(require_auth)])
+def history(entity_type: str, entity_id: str):
+    if entity_type not in ('projects', 'characters'):
+        raise HTTPException(404, 'Historique introuvable')
+    with db() as c:
+        if not c.execute(f'SELECT 1 FROM {entity_type} WHERE id=?', (entity_id,)).fetchone():
+            raise HTTPException(404, 'Fiche introuvable')
+        rows = c.execute('SELECT version,snapshot,created_at FROM revisions WHERE entity_type=? AND entity_id=? ORDER BY version DESC', (entity_type, entity_id)).fetchall()
+        return [{'version':r['version'], 'snapshot':json.loads(r['snapshot']), 'created_at':r['created_at']} for r in rows]
+
+
+@app.post('/api/v1/characters/{character_id}/references', dependencies=[Depends(require_auth)], status_code=201)
+def add_reference(character_id: str, body: ReferenceIn):
+    with db() as c:
+        c.execute('BEGIN IMMEDIATE')
+        character = c.execute('SELECT project_id FROM characters WHERE id=?', (character_id,)).fetchone()
+        asset = c.execute('SELECT project_id,type FROM assets WHERE id=?', (body.asset_id,)).fetchone()
+        if not character or not asset:
+            raise HTTPException(404, 'Personnage ou image introuvable')
+        if asset['project_id'] != character['project_id'] or asset['type'] != 'image':
+            raise HTTPException(422, 'Choisissez une image appartenant au même projet que le personnage.')
+        existing = c.execute('SELECT * FROM character_references WHERE character_id=? AND asset_id=? AND label=?', (character_id, body.asset_id, body.label)).fetchone()
+        if existing:
+            if bool(existing['approved']) != body.approved:
+                raise HTTPException(409, 'Cette référence existe déjà avec une autre approbation. Sa modification n’est pas disponible dans cette version.')
+            return dict(existing)
+        item = {'id':str(uuid.uuid4()), 'character_id':character_id, **body.model_dump(), 'created_at':time.time()}
+        c.execute('INSERT INTO character_references VALUES(:id,:character_id,:asset_id,:label,:approved,:created_at)', item)
+        audit(c, 'character.reference_added', character_id)
     return item
 
 
@@ -265,9 +380,13 @@ def export_project(project_id: str):
     with db() as c:
         project_exists(c, project_id)
         project = dict(c.execute('SELECT * FROM projects WHERE id=?', (project_id,)).fetchone())
-        manifest = {'schema_version':1,'project':project}
+        manifest = {'schema_version':2,'project':project}
         for table in ('assets','characters','jobs'):
             manifest[table] = [dict(r) for r in c.execute(f'SELECT * FROM {table} WHERE project_id=?',(project_id,))]
+        manifest['character_references'] = [dict(r) for r in c.execute('SELECT r.* FROM character_references r JOIN characters ch ON ch.id=r.character_id WHERE ch.project_id=?', (project_id,))]
+        manifest['revisions'] = [dict(r) for r in c.execute("SELECT * FROM revisions WHERE (entity_type='projects' AND entity_id=?) OR (entity_type='characters' AND entity_id IN (SELECT id FROM characters WHERE project_id=?)) ORDER BY created_at", (project_id, project_id))]
+        for revision in manifest['revisions']:
+            revision['snapshot'] = json.loads(revision['snapshot'])
     archive = io.BytesIO()
     with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED) as z:
         z.writestr('manifest.json',json.dumps(manifest,ensure_ascii=False,indent=2))

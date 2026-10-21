@@ -12,3 +12,11 @@ Environnement vérifié : Linux, Node 24.19.0, Python 3.12.14, Chromium système
 Les captures utilisent uniquement des données de test. Le studio livré n'est pas prérempli et son mot de passe propriétaire n'est pas défini.
 
 Non vérifié : Windows physique, accès mobile distant, restauration d'une nouvelle machine cloud et exécution GitHub Actions. Pas de génération IA réelle : les tests GPU et les benchmarks de qualité restent à effectuer dans les phases suivantes.
+
+## Mise à jour 0.2
+
+- 15 tests API, sauvegarde et migration : réussis. Les nouveaux cas vérifient les conflits de versions, la conservation des anciennes fiches, les références au bon projet, les doublons, l’export de l’historique et la mise à niveau répétée d’une vraie base v1 avec conservation des données d’authentification.
+- Build TypeScript/Vite : réussi.
+- Parcours navigateur étendu : édition du projet et du personnage, consultation des deux historiques, association d’une image approuvée. Les vérifications existantes desktop/mobile restent réussies, sans erreur JavaScript.
+- Sauvegarde hors ligne de la base réelle effectuée avant migration dans /workspace/shared/studio-backups/pre-v02-20261021. La sauvegarde reste hors Git et ne contient pas les données temporaires des tests.
+- Windows et accès mobile distant restent non testés. La génération IA est toujours indisponible.
