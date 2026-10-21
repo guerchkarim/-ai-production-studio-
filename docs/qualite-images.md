@@ -11,3 +11,11 @@ Pour tester dans la session Colab déjà chargée sans réinstaller ni télécha
 Pour importer ce simple essai dans l'application, télécharger le PNG puis utiliser Importer un média. Pour une génération avec association complète à une tâche, créer une NOUVELLE demande et utiliser le notebook mis à jour ; un ZIP différent ne peut pas remplacer un résultat déjà validé. Les résultats antérieurs sont conservés.
 
 Si le profil reste insuffisant, il faudra benchmarker un autre modèle sur le même sujet et le même matériel, avec licence et contraintes mémoire vérifiées. Aucun modèle n'est promu « qualité extrême » sans revue humaine.
+
+## Incident mémoire observé sur la session T4
+
+L'essai utilisateur 1024/35 étapes a affiché 35/35 en environ 31 s, puis Colab a signalé une saturation de **RAM système** et redémarré la session. Cette progression n'atteste pas une image décodée ou sauvegardée. Le point précis de défaillance (décodage VAE/transfert ou autre pic mémoire) n'est pas établi par la seule capture.
+
+Correction du chargeur : poids FP16 officiels, low_cpu_mem_usage, placement intégral sur GPU, décodage VAE par tuiles et contrôle préalable de RAM/VRAM. Le mode SDXL n'utilise plus enable_model_cpu_offload, qui peut conserver les poids en RAM système. Aucun TLS/checksum n'est désactivé, aucun modèle additionnel n'est introduit. Un minimum de 8 Gio de RAM libre et 10 Gio de VRAM libre sur un GPU total ≥14 Gio est exigé avant chargement ; il s'agit d'un garde-fou, pas d'une garantie d'absence d'OOM.
+
+Après le crash, ne pas relancer les anciennes cellules de génération. Vérifier la mémoire dans une session propre et utiliser le notebook corrigé, ou `scripts/colab/charger_sdxl_t4.py` avant le script d'essai. L'image précédente importée sur Windows est indépendante de la session Colab et reste conservée. La stabilité et la qualité du nouveau profil nécessitent une nouvelle exécution GPU réelle.

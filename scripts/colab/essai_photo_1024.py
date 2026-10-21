@@ -19,6 +19,11 @@ photo_prompt = ('Professional landscape photograph of a real botanical garden at
                 'natural green colors, believable botanical details, optical depth, no people, no text')
 photo_negative = ('illustration, painting, drawing, cartoon, CGI, 3d render, plastic, wool, felt, '
                   'knitted texture, fuzzy spheres, repeated geometric bushes, oversaturated, blurry, text, watermark')
+if getattr(pipe, 'hf_device_map', None) or getattr(pipe, '_all_hooks', []):
+    raise RuntimeError('Ce pipeline utilise un offload. Chargez d’abord le profil GPU FP16 par tuiles dans une session propre.')
+if str(pipe.device) != 'cuda:0' and str(pipe.device) != 'cuda':
+    raise RuntimeError('Le pipeline doit être placé sur le GPU avec le chargeur T4 corrigé avant l’essai 1024.')
+pipe.enable_vae_tiling()
 pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, algorithm_type='dpmsolver++', use_karras_sigmas=True)
 torch.cuda.synchronize()
 photo_started = time.perf_counter()
