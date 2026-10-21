@@ -37,6 +37,8 @@ def register(app,db,data,auth,audit):
             candidate=CANDIDATES[row['type']]
             token=secrets.token_urlsafe(32);rid=str(uuid.uuid4())
             doc={'schema_version':1,'job_id':jid,'run_id':rid,'result_token':token,'task_type':row['type'],'prompt':row['prompt'],**candidate,'seed':42,'language':'fr','steps':20,'width':512,'height':512,'duration_sec':5,'max_cost':row['max_cost'],'notice':'Le studio ne loue aucun GPU. Exécution manuelle dans votre session Colab, après vérification de la licence et des ressources. Le coût propre à votre abonnement Colab éventuel n’est pas mesuré.'}
+            if row['type']=='image':
+                doc.update({'image_profile':'native_photo_1024','width':1024,'height':1024,'steps':35,'guidance_scale':5.5,'negative_prompt':'illustration, painting, drawing, cartoon, CGI, 3d render, plastic texture, wool, felt, knitted texture, blurry, oversaturated, text, watermark'})
             c.execute('INSERT INTO remote_runs(id,job_id,token_hash,request,created_at) VALUES(?,?,?,?,?)',(rid,jid,hashlib.sha256(token.encode()).hexdigest(),json.dumps({k:v for k,v in doc.items() if k!='result_token'},ensure_ascii=False),time.time()))
             c.execute("UPDATE jobs SET status='review',reason='Demande exportée pour Colab. Aucun calcul lancé automatiquement ; import du résultat nécessaire.' WHERE id=?",(jid,))
             audit(c,'colab.package_exported',jid)
