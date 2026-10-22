@@ -7,7 +7,7 @@
 | R03 Image distante réelle | À exécuter dans votre Colab | Échange JSON/ZIP testé sur fixtures, notebook SDXL candidat fourni |
 | R04 Cohérence personnage 10 images | Non validé | Fiches, références et approbations disponibles, pas de benchmark GPU |
 | R05 Animation 5 secondes | Non validé sur GPU | Pipeline Colab Wan candidat, export CPU réel de médias importés validé |
-| R06 Voix AR/FR | Non validé sur Colab | Notebook MMS-TTS candidat non commercial ; qualité/latence à tester |
+| R06 Voix AR/FR | Auditions de base appréciées par le propriétaire ; casting non validé | Kokoro FR et Chatterbox AR essayés ; FastPitch Arabic jugé robotique. Le nouveau casting fictif par âge/timbre et le transfert FR/AR restent à tester ; voir casting-voix.md |
 | R07 MP4 lisible | Validé | H.264 1280×720 + audio, durée inspectée avec FFprobe |
 | R08 Reprise après interruption | Validé pour rendu CPU | Redémarrage et réutilisation des segments vérifiés ; pas de DAG génératif complet |
 | R09 Budget | Gardes locaux validés | Plafonds de tâches/projets ; coût d'abonnement Colab non mesuré |

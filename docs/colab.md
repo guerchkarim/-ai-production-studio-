@@ -1,5 +1,7 @@
 # Votre session Google Colab
 
+Pour plusieurs voix fictives par âge/timbre et par personnage, voir [Casting vocal personnel FR / AR](casting-voix.md) et le notebook indépendant `AI_Production_Studio_Casting_Voix_FR_AR.ipynb`. Les 16 profils cibles ne sont pas des voix déjà validées : commencer par une référence avant de compléter le catalogue.
+
 ## Comparer une autre voix française après MMS
 
 Le notebook indépendant `notebooks/AI_Production_Studio_Essai_Voix_FR.ipynb` propose Kokoro-82M, voix `ff_siwis`, via `kokoro-onnx==0.6.1` (Python 3.10 à 3.13). Il ne remplace pas le worker MMS : écouter le même texte avant de choisir. Exécuter ses trois cellules dans l'ordre, écouter le lecteur puis conserver le WAV et son JSON de provenance. Réimporter le WAV par **Importer un média**, pas par l'import de résultat d'une tâche MMS, qui vérifie l'identité du moteur.

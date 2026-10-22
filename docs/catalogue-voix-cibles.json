@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "notice": "Profils à créer, pas une bibliothèque de voix déjà disponibles. Âges perçus approximatifs.",
+  "profiles": [
+    {
+      "id": "F-petit",
+      "label": "Féminine · Petite enfance · environ 5 ans",
+      "age_target": "Petite enfance · environ 5 ans",
+      "gender_target": "Féminine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional female voice of a young child, around five years old, with light natural articulation. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "F-enfant",
+      "label": "Féminine · Enfant · environ 10 ans",
+      "age_target": "Enfant · environ 10 ans",
+      "gender_target": "Féminine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional female voice of a child, around ten years old, with clear lively articulation. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "F-ado",
+      "label": "Féminine · Adolescent · environ 15 ans",
+      "age_target": "Adolescent · environ 15 ans",
+      "gender_target": "Féminine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional female voice of a teenager, around fifteen years old, with a natural youthful timbre. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "F-20",
+      "label": "Féminine · Jeune adulte · environ 20 ans",
+      "age_target": "Jeune adulte · environ 20 ans",
+      "gender_target": "Féminine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional female voice of a young adult, around twenty years old. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "F-30",
+      "label": "Féminine · Adulte · environ 30 ans",
+      "age_target": "Adulte · environ 30 ans",
+      "gender_target": "Féminine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional female voice of an adult, around thirty years old. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "F-40",
+      "label": "Féminine · Adulte · environ 40 ans",
+      "age_target": "Adulte · environ 40 ans",
+      "gender_target": "Féminine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional female voice of an adult, around forty years old. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "F-50",
+      "label": "Féminine · Adulte · environ 50 ans",
+      "age_target": "Adulte · environ 50 ans",
+      "gender_target": "Féminine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional female voice of an adult, around fifty years old. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "F-senior",
+      "label": "Féminine · Senior · environ 70 ans",
+      "age_target": "Senior · environ 70 ans",
+      "gender_target": "Féminine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional female voice of an elderly adult, around seventy years old, with a gently aged timbre and clear diction. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "M-petit",
+      "label": "Masculine · Petite enfance · environ 5 ans",
+      "age_target": "Petite enfance · environ 5 ans",
+      "gender_target": "Masculine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional male voice of a young child, around five years old, with light natural articulation. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "M-enfant",
+      "label": "Masculine · Enfant · environ 10 ans",
+      "age_target": "Enfant · environ 10 ans",
+      "gender_target": "Masculine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional male voice of a child, around ten years old, with clear lively articulation. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "M-ado",
+      "label": "Masculine · Adolescent · environ 15 ans",
+      "age_target": "Adolescent · environ 15 ans",
+      "gender_target": "Masculine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional male voice of a teenager, around fifteen years old, with a natural youthful timbre. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "M-20",
+      "label": "Masculine · Jeune adulte · environ 20 ans",
+      "age_target": "Jeune adulte · environ 20 ans",
+      "gender_target": "Masculine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional male voice of a young adult, around twenty years old. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "M-30",
+      "label": "Masculine · Adulte · environ 30 ans",
+      "age_target": "Adulte · environ 30 ans",
+      "gender_target": "Masculine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional male voice of an adult, around thirty years old. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "M-40",
+      "label": "Masculine · Adulte · environ 40 ans",
+      "age_target": "Adulte · environ 40 ans",
+      "gender_target": "Masculine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional male voice of an adult, around forty years old. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "M-50",
+      "label": "Masculine · Adulte · environ 50 ans",
+      "age_target": "Adulte · environ 50 ans",
+      "gender_target": "Masculine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional male voice of an adult, around fifty years old. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    },
+    {
+      "id": "M-senior",
+      "label": "Masculine · Senior · environ 70 ans",
+      "age_target": "Senior · environ 70 ans",
+      "gender_target": "Masculine",
+      "languages_to_audition": [
+        "fr",
+        "ar"
+      ],
+      "status": "À créer et auditionner",
+      "reference_sha256": null,
+      "instruction": "A fictional male voice of an elderly adult, around seventy years old, with a gently aged timbre and clear diction. Speak French naturally, with clear pronunciation, a calm friendly tone, and normal conversational pace. Dry close-microphone recording, no music, no background noise. Avoid caricature or exaggerated pitch."
+    }
+  ]
+}

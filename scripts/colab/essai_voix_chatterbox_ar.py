@@ -1,4 +1,4 @@
-"""Audition arabe Chatterbox Multilingual, voix fournie par le modèle, sans clonage."""
+"""Audition Chatterbox FR/AR ; voix par défaut ou référence fictive conservée."""
 from pathlib import Path
 import argparse
 import hashlib
@@ -15,12 +15,27 @@ MODEL_FILES = [
 DEFAULT_TEXT = "مَرْحَبًا بِكُمْ فِي وَرْشَتِنَا. عَلِمَ الطَّالِبُ. عُلِمَ الْخَبَرُ. دَرَسَ الطَّالِبُ. دَرَّسَ الْمُعَلِّمُ."
 
 
-def validate_text(text):
+def validate_text(text, language="ar"):
+    if language not in ("ar", "fr"):
+        raise ValueError("Langue : ar ou fr.")
     if not isinstance(text, str) or not 1 <= len(text.strip()) <= 500:
         raise ValueError("Essai : un texte de 1 à 500 caractères.")
-    if not re.search(r"[\u0621-\u064a]", text) or not re.search(r"[\u064b-\u0652]", text):
+    if language == "ar" and (not re.search(r"[\u0621-\u064a]", text) or not re.search(r"[\u064b-\u0652]", text)):
         raise ValueError("Utilisez un texte arabe vocalisé pour comparer la diction.")
     return text.strip()
+
+
+def validate_reference(path, expected_sha256):
+    import soundfile as sf
+    path = Path(path)
+    if not path.is_file() or path.stat().st_size > 10 * 1024**2:
+        raise ValueError("Référence WAV absente ou supérieure à 10 Mo.")
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_sha256 or "") or digest(path) != expected_sha256:
+        raise ValueError("La référence vocale ne correspond pas à l'empreinte conservée.")
+    info = sf.info(path)
+    if info.format != "WAV" or not 3 <= info.duration <= 20 or info.channels not in (1, 2):
+        raise ValueError("Référence : WAV de 3 à 20 secondes, mono ou stéréo.")
+    return path
 
 
 def phoneme_checks(tokenizer):
@@ -38,8 +53,11 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def generate(text, directory, seed=42, device="cuda"):
-    text = validate_text(text)
+def generate(text, directory, seed=42, device="cuda", language="ar", reference=None,
+             reference_sha256=None, voice_name=None, model_revision=None):
+    text = validate_text(text, language)
+    if reference is not None:
+        reference = validate_reference(reference, reference_sha256)
     if device not in ("cuda", "cpu"):
         raise ValueError("Périphérique non pris en charge.")
     import numpy as np
@@ -68,7 +86,7 @@ def generate(text, directory, seed=42, device="cuda"):
     if device == "cuda":
         torch.cuda.manual_seed_all(seed)
     started = time.perf_counter()
-    revision = model_info(MODEL_ID, token=False).sha
+    revision = model_revision or model_info(MODEL_ID, token=False).sha
     if not isinstance(revision, str) or not re.fullmatch(r"[0-9a-f]{40}", revision):
         raise RuntimeError("Révision officielle du modèle introuvable.")
     print("Téléchargement du modèle officiel, révision :", revision, flush=True)
@@ -79,31 +97,36 @@ def generate(text, directory, seed=42, device="cuda"):
         raise RuntimeError("Fichiers du modèle incomplets, y compris la voix fournie par le modèle.")
     print("Chargement de Chatterbox Multilingual V2...", flush=True)
     model = ChatterboxMultilingualTTS.from_local(checkpoint, device=device)
-    checks = phoneme_checks(model.tokenizer)
+    checks = phoneme_checks(model.tokenizer) if language == "ar" else []
     if not all(check["distinct_tokens"] for check in checks):
         raise RuntimeError("Ce tokenizer ne distingue pas tous les signes testés. Ne pas retenir cet essai pour l'arabe vocalisé.")
     loaded = time.perf_counter()
-    print("Synthèse en arabe, avec la voix par défaut, sans audio de référence...", flush=True)
+    print("Synthèse", language, "avec référence fictive conservée." if reference else "avec la voix par défaut.", flush=True)
     # cfg_weight=0 suit la recommandation du mainteneur pour limiter le transfert
     # d'accent depuis une voix de référence d'une autre langue. Résultat à écouter.
+    cfg_weight = 0.3 if reference is not None else 0.0
+    kwargs = {"audio_prompt_path": str(reference)} if reference is not None else {}
     with torch.inference_mode():
-        waveform = model.generate(text, language_id="ar", exaggeration=0.5,
-                                  cfg_weight=0.0, temperature=0.8)
+        waveform = model.generate(text, language_id=language, exaggeration=0.5,
+                                  cfg_weight=cfg_weight, temperature=0.8, **kwargs)
     if device == "cuda":
         torch.cuda.synchronize()
     finished = time.perf_counter()
     samples = waveform.detach().cpu().float().numpy().squeeze()
     if samples.ndim != 1 or not samples.size or not np.isfinite(samples).all() or not np.max(np.abs(samples)):
         raise RuntimeError("Résultat audio vide ou invalide.")
-    output = folder / "essai-chatterbox-ar.wav"
+    output = folder / ("essai-chatterbox-" + language + ".wav")
     sf.write(str(output), samples, model.sr, subtype="PCM_16")
     report = {
         "model_id": MODEL_ID, "model_revision": revision, "variant": "Multilingual V2",
         "engine": "chatterbox-tts 0.1.7", "torch_version": torch.__version__,
         "device": device, "gpu": torch.cuda.get_device_name(0) if device == "cuda" else None,
-        "language": "ar", "text": text, "automatic_vowelizer": None,
-        "voice": "Conditionnement fourni avec le modèle ; aucun audio personnel de référence.",
-        "seed": seed, "exaggeration": 0.5, "cfg_weight": 0.0, "temperature": 0.8,
+        "language": language, "text": text, "automatic_vowelizer": None,
+        "voice": voice_name or "Voix fournie avec le modèle",
+        "reference_sha256": reference_sha256 if reference is not None else None,
+        "reference_language": "fr" if reference is not None else None,
+        "cross_language_identity": "Identité et accent à approuver séparément en FR et AR.",
+        "seed": seed, "exaggeration": 0.5, "cfg_weight": cfg_weight, "temperature": 0.8,
         "sample_rate": model.sr, "duration_sec": len(samples) / model.sr,
         "load_sec_including_download": round(loaded-started, 3),
         "generation_sec": round(finished-loaded, 3), "token_checks": checks,
@@ -121,5 +144,12 @@ if __name__ == "__main__":
     parser.add_argument("--text-file", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--device", choices=["cuda", "cpu"], default="cuda")
+    parser.add_argument("--language", choices=["ar", "fr"], default="ar")
+    parser.add_argument("--reference", type=Path)
+    parser.add_argument("--reference-sha256")
+    parser.add_argument("--voice-name")
+    parser.add_argument("--model-revision")
     args = parser.parse_args()
-    generate(args.text_file.read_text(encoding="utf-8"), args.output_dir, device=args.device)
+    generate(args.text_file.read_text(encoding="utf-8"), args.output_dir, device=args.device,
+             language=args.language, reference=args.reference, reference_sha256=args.reference_sha256,
+             voice_name=args.voice_name, model_revision=args.model_revision)
