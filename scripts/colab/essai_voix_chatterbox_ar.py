@@ -45,6 +45,9 @@ def generate(text, directory, seed=42, device="cuda"):
     import numpy as np
     import torch
     import soundfile as sf
+    import perth
+    if not callable(perth.PerthImplicitWatermarker):
+        raise RuntimeError("Perth incomplet. Installez setuptools==80.9.0 dans l'environnement isolé, puis relancez ce programme.")
     from huggingface_hub import model_info, snapshot_download
     from chatterbox.mtl_tts import ChatterboxMultilingualTTS
     from importlib.metadata import version
