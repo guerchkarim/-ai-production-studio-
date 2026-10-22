@@ -10,6 +10,14 @@ Validation du 22 octobre 2026 : génération réelle CPU de « Bonjour, bienvenu
 
 ## Worker de tâches existant
 
+### Essai spécialisé arabe vocalisé
+
+`notebooks/AI_Production_Studio_Essai_Voix_AR.ipynb` teste FastPitch Arabic + HiFi-GAN avec le phonémiseur arabe de `nipponjo/tts_arabic`, révision `eae130c8b94ebf88d3fa727db63c740859106327`. Le notebook ne touche ni Kokoro français, ni les tâches MMS, ni les données du studio. Il produit un WAV réimportable par **Importer un média**, accompagné de la provenance JSON.
+
+Les harakāt saisis restent dans le texte ; `vowelizer=None` désactive la réécriture automatique. L'utilisateur doit relire la vocalisation avant synthèse. Le contrôle CPU des tokens distingue réellement `عَلِمَ`/`عُلِمَ`, `دَرَسَ`/`دَرَّسَ` et `قَلَمٌ`/`قَلَمٍ`. Cela ne valide ni l'acoustique, ni les règles de pause, ni une prononciation parfaite. Cette livraison n'a pas exécuté les poids arabes : l'audio et le fonctionnement dans Colab restent à valider. Le modèle n'est pas un moteur de tajwid.
+
+Les modèles ONNX viennent des liens Google Drive publiés dans le dépôt du mainteneur. Le JSON enregistre leurs empreintes observées, sans les présenter comme vérifiées contre un manifeste signé. Les notices de tiers sont liées dans le notebook ; la révision choisie n'a pas de fichier LICENSE racine, donc ne pas en déduire une licence globale ou une autorisation de redistribution. Le chargement CPU évite de modifier PyTorch et n'exige aucune clé fournisseur. La session Colab connectée peut néanmoins continuer à consommer ses unités GPU.
+
 L'application fonctionne sans Colab. Le notebook sert uniquement à vos calculs lourds ponctuels dans une session existante, sans connexion publique au studio.
 
 1. Créer une demande dans **Tâches**, choisir Image/Vidéo/Voix et rédiger le prompt ou le texte. Fixer le plafond local.
