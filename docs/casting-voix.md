@@ -1,5 +1,11 @@
 # Casting vocal personnel FR / AR
 
+## Utilisation entièrement dans Colab
+
+Pour créer les voix sans installation Windows, utiliser `notebooks/AI_Production_Studio_Colab.ipynb` : choisir la L4, exécuter les trois cellules et connecter Drive, puis utiliser le panneau **Mon studio de voix** en bas. Choisir le profil, la variante (1 puis 2 pour votre sélection actuelle), les langues et cliquer **Créer et enregistrer**. Les lecteurs apparaissent et le dossier Drive reçoit automatiquement WAV, JSON, référence réutilisable et catalogue, sans téléchargement manuel. Les références déjà sauvegardées pour le profil/numéro sont réutilisées ; si plusieurs existent, la dernière sauvegardée est indiquée et reprise. Rien n’est envoyé automatiquement à cette conversation ou au logiciel Windows.
+
+Validation : cellules compilées ; simulation du bouton avec deux variantes FR/AR, réutilisation de référence et inventaire Drive simulé réussie, sans modèles ni GPU. Widgets, connexion Drive et génération dans cette interface restent à valider dans Colab. Les moteurs de base ont été essayés dans les notebooks précédents. La session doit rester active pendant le calcul ; le programme ne peut pas créer de voix après arrêt de Colab.
+
 ## Import automatique dans AI Production Studio 0.4
 
 L'écran **Voix** contient un casting indépendant des projets : profil, variante, références et répliques FR/AR, lecteurs audio, fiches JSON et choix « Retenir cette voix ». Une réplique peut ensuite être ajoutée au projet sélectionné pour le montage. Les anciens médias audio restent accessibles et les voix entrent comme candidates, sans sélection automatique.
