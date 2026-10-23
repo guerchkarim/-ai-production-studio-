@@ -19,6 +19,14 @@ Ces âges sont des descriptions de timbre, pas des âges exacts garantis. Le tim
 
 ## Essai dans Colab
 
+### Rangement automatique
+
+La version du 23 octobre sauvegarde automatiquement chaque création et chaque réplique dans **Mon Drive / AI Production Studio / Voix**. Google Colab demande l'autorisation de connecter Drive au premier lancement. Une fois connecté, aucun téléchargement manuel n'est nécessaire. Chaque dossier porte le profil, la variante et une courte empreinte de référence pour éviter de mélanger deux créations : `M-petit_var1_ab12cd34ef56`. WAV et JSON sont nommés ensemble ; les répliques FR/AR et leurs prises sont numérotées, sans remplacer les anciens WAV. Le catalogue `catalogue_voix.json` est actualisé à chaque sauvegarde. Le sous-fichier `voix-fictive.zip` reste utilisable pour retrouver ce timbre.
+
+`TELECHARGER_AUTOMATIQUEMENT`, désactivé par défaut, ajoute un téléchargement ZIP du dossier à chaque étape. Chrome choisit sa destination selon ses réglages ; un notebook ne peut pas créer ou remplir librement un dossier Windows. Si Drive est désactivé, la copie locale Colab est éphémère et il faut conserver les ZIP. L'assistant n'a pas d'accès automatique à votre Drive ni aux fichiers créés dans une autre session : l'archivage est effectué par le notebook, pas par une surveillance de cette conversation. Aucun import dans le studio Windows n'est effectué automatiquement.
+
+Tests locaux : nommage des WAV/JSON, ZIP de référence réutilisable, répétition sans doublon, conservation des anciennes prises, index FR/AR, refus de checksum incorrect et de profil traversant les chemins. La connexion effective Drive et les téléchargements du navigateur restent à tester dans la session Colab du propriétaire.
+
 Ouvrir `AI_Production_Studio_Casting_Voix_FR_AR.ipynb` dans la session L4 existante. L'installation utilise deux environnements Python séparés. Aucun abonnement supplémentaire ni clé API n'est nécessaire ; la session consomme toujours ses unités Colab. Le notebook génère un candidat à la fois, sans boucle sur tout le catalogue.
 
 1. Choisir un profil et une variante. Qwen3-TTS VoiceDesign génère une référence **fictive en français**, sans demander l'enregistrement d'une personne réelle. Qwen ne prend pas directement en charge l'arabe.
