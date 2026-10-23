@@ -26,6 +26,13 @@ for (checksum,) in assets:
     path=source/'media'/checksum
     if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=checksum:
         parser.error('Média absent ou checksum invalide.')
+with sqlite3.connect(source/'studio.sqlite3') as conn:
+    voice_table=conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='voice_clips'").fetchone()
+    if voice_table:
+        for (checksum,) in conn.execute('SELECT DISTINCT checksum FROM voice_clips'):
+            path=source/'voice-media'/checksum
+            if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=checksum:
+                parser.error('Audio de casting absent ou checksum invalide.')
 shutil.copytree(source,target)
 if args.action=='restore':
     with sqlite3.connect(target/'studio.sqlite3') as conn:

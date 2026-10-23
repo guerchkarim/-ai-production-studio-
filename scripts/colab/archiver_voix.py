@@ -83,7 +83,7 @@ def save_voice(root, reference_dir, audition=None):
     temporary.replace(root / "catalogue_voix.json")
     # Un fichier ZIP téléchargeable conserve exactement la même arborescence.
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6]
-    archive = root / (prefix + "_" + stamp + ".zip")
+    archive = root / ("Studio-Voix-" + prefix + "_" + stamp + ".zip")
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
         for path in sorted(folder.iterdir()):
             if path.is_file():

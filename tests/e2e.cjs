@@ -138,6 +138,43 @@ await page.getByRole('button',{name:'Restaurer un ZIP',exact:true}).click();
 await page.locator('input[name=archive]').setInputFiles(process.env.STUDIO_E2E_OUTPUT+'/project-export.zip');
 await page.getByRole('dialog').getByRole('button',{name:'Enregistrer',exact:true}).click();
 await page.getByRole('heading',{name:'Les jardins de demain · restauré',exact:true}).first().waitFor();
+// Real filesystem package -> background watcher -> casting UI, without manual upload.
+await page.locator('nav').getByRole('button',{name:'Voix',exact:true}).click();
+await page.getByRole('heading',{name:'Votre casting vocal',exact:true}).waitFor();
+const voicePython=process.env.STUDIO_PYTHON||require('node:path').resolve('.venv/bin/python');
+const voicePackage=require('node:child_process').execFileSync(voicePython,['-c',`
+from pathlib import Path
+import os,wave,json,hashlib,shutil
+from scripts.colab.archiver_voix import save_voice
+base=Path(os.environ['STUDIO_DATA_DIR'])
+ref=base/'casting-fixture';ref.mkdir()
+for name,duration,value in [('reference.wav',4,3),('replique.wav',1,5)]:
+ with wave.open(str(ref/name),'wb') as w:
+  w.setnchannels(1);w.setsampwidth(2);w.setframerate(24000);w.writeframes(bytes([value,0])*24000*duration)
+sha=hashlib.sha256((ref/'reference.wav').read_bytes()).hexdigest()
+(ref/'voix.json').write_text(json.dumps({'profile_id':'M-petit','variant':2,'reference_sha256':sha,'reference_language':'fr'}))
+audio=ref/'replique.wav'
+audio.with_suffix('.json').write_text(json.dumps({'reference_sha256':sha,'audio_sha256':hashlib.sha256(audio.read_bytes()).hexdigest(),'language':'ar'}))
+_,archive,_=save_voice(base/'Voix-a-importer',ref,audio)
+print(archive)
+`],{encoding:'utf8'}).trim();
+await page.getByRole('heading',{name:'M-petit · variante 2',exact:true}).waitFor({timeout:25000});
+await page.locator('.voice-library').getByText('Candidate',{exact:true}).waitFor();
+assert.equal(await page.locator('.voice-library audio').count(),2);
+const voiceAudioUrl=await page.locator('.voice-library audio').last().getAttribute('src');
+assert.equal((await page.request.get(new URL(voiceAudioUrl,page.url()).href)).status(),200);
+await page.getByRole('button',{name:'Retenir cette voix',exact:true}).click();
+await page.getByRole('button',{name:'Remettre en candidate',exact:true}).waitFor();
+await page.locator('.voice-library input[type=file]').setInputFiles(voicePackage);
+await page.getByText('Paquet classé dans le casting.',{exact:true}).waitFor();
+assert.equal(await page.locator('.voice-library .character-card').count(),1);
+await page.getByRole('button',{name:'Utiliser dans le projet sélectionné',exact:true}).click();
+await page.getByText('Réplique ajoutée au projet sélectionné.',{exact:true}).waitFor();
+await page.screenshot({path:process.env.STUDIO_E2E_OUTPUT+'/casting-automatic.png',fullPage:true});
+await page.setViewportSize({width:390,height:844});
+await page.screenshot({path:process.env.STUDIO_E2E_OUTPUT+'/casting-mobile.png',fullPage:true});
+assert(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),'Casting must fit mobile');
+await page.setViewportSize({width:1440,height:1100});
 // Verify the built PWA shell on the isolated API's production origin.
 const productionPage=await browser.newPage();
 await productionPage.goto('http://127.0.0.1:8002/');
@@ -156,7 +193,7 @@ await page.getByRole('button',{name:'Ouvrir la navigation'}).click();
 await page.locator('nav').getByRole('button',{name:'Personnages',exact:true}).click();
 await page.getByRole('heading',{name:'نور — Nour'}).waitFor();
 assert.equal(errors.length,0,'No browser runtime errors: '+errors.join('; '));
-console.log('E2E PASS: owner setup, project/character editing and histories, approved reference image, upload/preview, budget rejection, blocked task, refresh persistence, cancellation, storyboard, real MP4 export, ZIP restore, PWA privacy, Colab exchange controls, mobile navigation; no page errors.');
+console.log('E2E PASS: owner setup, project/character editing and histories, approved reference image, upload/preview, budget rejection, blocked task, refresh persistence, cancellation, storyboard, real MP4 export, ZIP restore, PWA privacy, Colab exchange controls, automatic casting folder import, voice selection and project use, mobile navigation; no page errors.');
 await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});
 

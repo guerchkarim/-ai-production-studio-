@@ -54,7 +54,7 @@ def main():
         import sqlite3
         with sqlite3.connect(data/'studio.sqlite3') as conn:
             version=conn.execute('SELECT MAX(version) FROM schema_version').fetchone()[0]
-        if version<4:
+        if version<5:
             destination=ROOT/'.studio-backups'/time.strftime('%Y%m%d-%H%M%S')
             subprocess.run([str(python),'scripts/backup.py','backup',str(destination),'--data',str(data)],cwd=ROOT,check=True)
     print('Démarrage du studio personnel. Aucun service payant ni clé API nécessaire.')

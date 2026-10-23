@@ -1,5 +1,12 @@
 # AI Production Studio · 0.3
 
+## Mise à jour 0.4 : casting vocal automatique
+
+Les paquets de création Colab arrivent dans le casting **Voix** depuis un dossier surveillé sur le PC. WAV et JSON sont classés par profil/variante, restent candidats et peuvent être écoutés puis retenus. Une réplique peut rejoindre le projet sélectionné. Le Studio doit être ouvert et le navigateur doit télécharger ses paquets dans ce dossier, ou Drive doit les synchroniser localement. Aucun accès direct du Studio à votre Colab privé n’est installé.
+
+Pour mettre à jour une installation Windows existante : fermer le serveur, télécharger/extracter les sources dans un nouveau dossier, lancer `Mettre-a-jour-Studio.cmd` et choisir le dossier habituel. Les données et l’ancien code sont sauvegardés avant copie ; le dépôt d’arabe est refusé. Voir [les instructions de casting](docs/casting-voix.md).
+
+
 Atelier audiovisuel personnel, React/TypeScript + FastAPI + SQLite + FFmpeg. Dépôt indépendant de votre application d'évaluation d'arabe. Le serveur écoute uniquement en boucle locale. Aucune clé Gemini, carte bancaire ou souscription n'est nécessaire pour démarrer.
 
 ## Démarrer sur Windows

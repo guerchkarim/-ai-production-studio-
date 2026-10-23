@@ -76,7 +76,7 @@ def save_revision(c, entity_type, item):
 
 
 migrate_v2()
-app = FastAPI(title='AI Production Studio', version='0.3.0')
+app = FastAPI(title='AI Production Studio', version='0.4.0')
 
 class Password(BaseModel):
     password: str = Field(min_length=10, max_length=256)
@@ -140,7 +140,7 @@ def as_list(c, table):
 
 @app.get('/api/v1/health')
 def health():
-    return {'status': 'ok', 'version': '0.3.0'}
+    return {'status': 'ok', 'version': '0.4.0'}
 
 
 @app.get('/api/v1/auth/status')
@@ -409,6 +409,9 @@ register_restore(app, db, DATA, require_auth, audit, ProjectIn, CharacterIn)
 
 from .colab import register as register_colab
 register_colab(app, db, DATA, require_auth, audit)
+
+from .voice_library import register as register_voice_library
+voice_library = register_voice_library(app, db, DATA, require_auth, audit, project_exists)
 
 # A local production build can be served by the same authenticated API origin.
 # The static shell contains no user data; all private content remains behind /api.

@@ -1,5 +1,13 @@
 # Validation du socle · 21 octobre 2026
 
+## Version 0.4 · 23 octobre 2026
+
+- **43 tests réussis** : migrations additives jusqu'au schéma 5, conservation des données, paquets de casting produits par le vrai module d'archivage (audio de fixture), import/doublons/approbation, attente de fichiers stables, origine privée, refus de paquets hostiles et utilisation d'une réplique dans un projet. L'assistant de mise à jour est testé dans des dossiers isolés : anciennes sources sauvegardées, base/mot de passe/anciens WAV préservés, autre projet et serveur ouvert refusés.
+- Build TypeScript/Vite réussi. E2E Chromium desktop et mobile réussi : un paquet écrit dans le dossier d'arrivée apparaît automatiquement dans l'écran Voix via le worker réel, deux lecteurs audio disponibles, écoute HTTP privée, choix « Retenir », réimport sans doublon, utilisation dans le projet et affichage mobile sans débordement. Les parcours existants (projets, personnages, rendu FFmpeg, restauration, PWA sans cache privé) restent valides. Aucune erreur JavaScript.
+- Code et cellules du notebook compilés. Les ZIP `Studio-Voix-...zip` sont téléchargés par défaut et restent aussi sauvegardés dans Drive si connecté. Le Studio local ne peut pas accéder à Colab/Drive à distance ; la synchronisation locale ou la destination Chrome doit être configurée une fois.
+- Pas de nouvelle exécution de modèle IA pour cette livraison. Connexion Drive, demandes de téléchargements multiples Chrome, assistant graphique Windows et surveillance d'un vrai dossier Drive synchronisé restent à vérifier sur le PC du propriétaire. Le lanceur sauvegarde les données avant migration 4→5 ; aucune nouvelle installation ni mise à jour n'est appliquée à distance au PC depuis Codex.
+- Aucun fichier du dépôt d'évaluation d'arabe n'a été modifié. La bibliothèque de casting est incluse dans la sauvegarde complète de `.studio-data` ; les exports de projet contiennent les répliques utilisées comme médias, pas toute la bibliothèque globale.
+
 Environnement vérifié : Linux, Node 24.19.0, Python 3.12.14, Chromium système, CPU. Aucune clé fournisseur ni GPU.
 
 - `npm ci` : installation depuis le verrou npm réussie.
